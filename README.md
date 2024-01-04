@@ -4,5 +4,11 @@
 
 # Cafe DB management
 
-1. Run up the docker database
+1. Clone Project
+2. ```npm install```
+3. Rename the ```.env.template``` to ```.env``` and put the variables
+4. Run the docker database
   ```docker-compose up -d```
+
+5. Start the project
+```npm run start:dev```
