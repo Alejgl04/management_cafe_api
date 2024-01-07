@@ -1,11 +1,27 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
+
+  async create(createAuthDto: CreateUserDto) {
+    try {
+      const user = this.userRepository.create(createAuthDto);
+      await this.userRepository.save(user);
+    } catch (error) {
+      this.handleDbErrors(error);
+    }
   }
 
   findAll() {
@@ -16,11 +32,18 @@ export class AuthService {
     return `This action returns a #${id} auth`;
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+  // update(id: number, updateAuthDto: UpdateAuthDto) {
+  //   return `This action updates a #${id} auth`;
+  // }
 
   remove(id: number) {
     return `This action removes a #${id} auth`;
+  }
+
+  private handleDbErrors(error: any): never {
+    if (error.code === '23505') {
+      throw new BadRequestException(error.detail);
+    }
+    throw new InternalServerErrorException('check admin logs');
   }
 }
