@@ -6,7 +6,7 @@ export class User {
   id: string;
 
   @Column('text')
-  name: string;
+  fullName: string;
 
   @Column('text')
   phone: string;
