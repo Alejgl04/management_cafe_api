@@ -4,18 +4,22 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto, SignInUserDto } from './dto/';
+import { JwtPayload } from './interfaces/jwt.payload.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -28,7 +32,14 @@ export class AuthService {
       await this.userRepository.save(user);
       delete user.password;
 
-      return user;
+      return {
+        ...user,
+        token: this.getJwtToken({
+          id: user.id,
+          email: user.email,
+          roles: user.roles,
+        }),
+      };
     } catch (error) {
       this.handleDbErrors(error);
     }
@@ -39,7 +50,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true },
+      select: { id: true, email: true, password: true, roles: true },
     });
 
     if (!user)
@@ -49,7 +60,14 @@ export class AuthService {
       throw new UnauthorizedException(`Credentials are not valid (password)`);
 
     //!TODO: return token...
-    return user;
+    return {
+      ...user,
+      token: this.getJwtToken({
+        id: user.id,
+        email: user.email,
+        roles: user.roles,
+      }),
+    };
   }
 
   findAll() {
@@ -66,6 +84,11 @@ export class AuthService {
 
   remove(id: number) {
     return `This action removes a #${id} auth`;
+  }
+
+  private getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 
   private handleDbErrors(error: any): never {
