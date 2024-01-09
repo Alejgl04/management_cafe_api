@@ -9,6 +9,7 @@ import { AuthController } from './auth.controller';
 
 import { User } from './entities/user.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   controllers: [AuthController],
@@ -29,6 +30,16 @@ import { JwtStrategy } from './strategies/jwt.strategy';
             expiresIn: '1h',
           },
         };
+      },
+    }),
+
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        auth: {
+          user: 'aguerrerodev.web@gmail.com',
+          pass: 'nawcmccrboiwxqdl',
+        },
       },
     }),
   ],

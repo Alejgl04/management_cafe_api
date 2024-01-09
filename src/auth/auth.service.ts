@@ -7,10 +7,11 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
-import { CreateUserDto, SignInUserDto } from './dto/';
+import { CreateUserDto, ForgotPasswordUserDto, SignInUserDto } from './dto/';
 import { JwtPayload } from './interfaces/jwt.payload.interface';
 
 @Injectable()
@@ -18,7 +19,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-
+    private readonly mailerService: MailerService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -59,7 +60,6 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password))
       throw new UnauthorizedException(`Credentials are not valid (password)`);
 
-    //!TODO: return token...
     return {
       ...user,
       token: this.getJwtToken({
@@ -67,6 +67,25 @@ export class AuthService {
         email: user.email,
         roles: user.roles,
       }),
+    };
+  }
+
+  async forgotPassword(forgotPasswordUserDto: ForgotPasswordUserDto) {
+    const { email } = forgotPasswordUserDto;
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!user)
+      throw new BadRequestException(
+        `The preview email ${email} do not exist in our records`,
+      );
+    const responseMail = this.handleMailPassword(user);
+    if (!responseMail) {
+      throw new BadRequestException('Something went wrong, try again');
+    }
+    return {
+      message: 'Message has been sent to your email',
     };
   }
 
@@ -89,6 +108,39 @@ export class AuthService {
   private getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
+  }
+
+  private handleMailPassword(user: User) {
+    const { fullName, email } = user;
+    try {
+      return new Promise((resolve, reject) => {
+        const sendMail = this.mailerService.sendMail({
+          to: email, // list of receivers
+          from: 'admin@cafe.com', // sender address
+          subject: 'Recovery Password ✔', // Subject line
+          html: `
+          <div style="background:#cdcdcd;padding:20px;font-size:20px;">
+            <div style="background:white;width: 70%;margin: auto;padding: 15px;">
+              Hello ${fullName},
+              <hr>
+              <br>
+              We've received a request to reset the password for the account associated with ${email}. No changes have been made to your account yet.
+              <br>
+              You can reset your password by clicking the link below:
+              <br>
+              <a href="">Reset Password</a>
+              </div>
+          </div>
+          `, // HTML body content
+        });
+        sendMail ? resolve(true) : reject(false);
+      });
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'Something went wrong, check admin',
+      );
+    }
   }
 
   private handleDbErrors(error: any): never {
