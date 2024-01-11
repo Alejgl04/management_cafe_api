@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpCode,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -13,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto, ForgotPasswordUserDto, SignInUserDto } from './dto/';
 import { JwtPayload } from './interfaces/jwt.payload.interface';
+import { Response, response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -80,13 +82,8 @@ export class AuthService {
       throw new BadRequestException(
         `The preview email ${email} do not exist in our records`,
       );
-    const responseMail = this.handleMailPassword(user);
-    if (!responseMail) {
-      throw new BadRequestException('Something went wrong, try again');
-    }
-    return {
-      message: 'Message has been sent to your email',
-    };
+
+    return this.handleMailPassword(user);
   }
 
   findAll() {
@@ -110,37 +107,39 @@ export class AuthService {
     return token;
   }
 
-  private handleMailPassword(user: User) {
+  private async handleMailPassword(user: User) {
     const { fullName, email } = user;
-    try {
-      return new Promise((resolve, reject) => {
-        const sendMail = this.mailerService.sendMail({
-          to: email, // list of receivers
-          from: 'admin@cafe.com', // sender address
-          subject: 'Recovery Password ✔', // Subject line
-          html: `
-          <div style="background:#cdcdcd;padding:20px;font-size:20px;">
-            <div style="background:white;width: 70%;margin: auto;padding: 15px;">
-              Hello ${fullName},
-              <hr>
-              <br>
-              We've received a request to reset the password for the account associated with ${email}. No changes have been made to your account yet.
-              <br>
-              You can reset your password by clicking the link below:
-              <br>
-              <a href="">Reset Password</a>
-              </div>
+    return this.mailerService
+      .sendMail({
+        to: email, // list of receivers
+        from: 'admin@cafe.com', // sender address
+        subject: 'Recovery Password ✔', // Subject line
+        html: `
+      <div style="background:#cdcdcd;padding:20px;font-size:20px;">
+        <div style="background:white;width: 70%;margin: auto;padding: 15px;">
+          Hello ${fullName},
+          <hr>
+          <br>
+          We've received a request to reset the password for the account associated with ${user.email}. No changes have been made to your account yet.
+          <br>
+          You can reset your password by clicking the link below:
+          <br>
+          <a href="">Reset Password</a>
           </div>
-          `, // HTML body content
-        });
-        sendMail ? resolve(true) : reject(false);
+      </div>`,
+      })
+      .then((resp) => {
+        return {
+          ok: true,
+          message: resp.response,
+        };
+      })
+      .catch((error) => {
+        return {
+          ok: false,
+          message: error.response,
+        };
       });
-    } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException(
-        'Something went wrong, check admin',
-      );
-    }
   }
 
   private handleDbErrors(error: any): never {
