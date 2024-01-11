@@ -10,6 +10,7 @@ import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { MailConfig } from '../config/mail.config';
 
 @Module({
   controllers: [AuthController],
@@ -33,14 +34,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
       },
     }),
 
-    MailerModule.forRoot({
-      transport: {
-        host: 'smtp.gmail.com',
-        auth: {
-          user: 'aguerrerodev.web@gmail.com',
-          pass: 'nawcmccrboiwxqdl',
-        },
-      },
+    MailerModule.forRootAsync({
+      useClass: MailConfig,
     }),
   ],
   exports: [TypeOrmModule, JwtStrategy, PassportModule, JwtModule],
