@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpCode,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -14,7 +13,6 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto, ForgotPasswordUserDto, SignInUserDto } from './dto/';
 import { JwtPayload } from './interfaces/jwt.payload.interface';
-import { Response, response } from 'express';
 
 @Injectable()
 export class AuthService {
