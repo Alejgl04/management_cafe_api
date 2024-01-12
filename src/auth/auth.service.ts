@@ -34,12 +34,9 @@ export class AuthService {
       delete user.password;
 
       return {
-        ...user,
-        token: this.getJwtToken({
-          id: user.id,
-          email: user.email,
-          roles: user.roles,
-        }),
+        ok: true,
+        message:
+          'we have sent a notification to our administrator to approve this registration',
       };
     } catch (error) {
       this.handleDbErrors(error);
@@ -48,18 +45,7 @@ export class AuthService {
 
   async signIn(signInUserDto: SignInUserDto) {
     const { email, password } = signInUserDto;
-
-    const user = await this.userRepository.findOne({
-      where: { email },
-      select: { id: true, email: true, password: true, roles: true },
-    });
-
-    if (!user)
-      throw new UnauthorizedException(`Credentials are not valid (email)`);
-
-    if (!bcrypt.compareSync(password, user.password))
-      throw new UnauthorizedException(`Credentials are not valid (password)`);
-
+    const user = await this.checkUser(email, password);
     return {
       ...user,
       token: this.getJwtToken({
@@ -105,6 +91,29 @@ export class AuthService {
   private getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
+  }
+
+  private async checkUser(email: string, password: string) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        roles: true,
+        status: true,
+      },
+    });
+
+    if (!user)
+      throw new UnauthorizedException(`Credentials are not valid (email)`);
+
+    if (!bcrypt.compareSync(password, user.password))
+      throw new UnauthorizedException(`Credentials are not valid (password)`);
+
+    if (!user.status)
+      throw new UnauthorizedException('Waiting for admin approval');
+    return user;
   }
 
   private async handleMailPassword(user: User) {
