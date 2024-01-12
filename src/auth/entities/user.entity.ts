@@ -28,7 +28,7 @@ export class User {
   password: string;
 
   @Column('bool', {
-    default: true,
+    default: false,
   })
   status: boolean;
 
