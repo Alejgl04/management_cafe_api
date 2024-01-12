@@ -21,7 +21,7 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordUserDto);
   }
 
-  @Get()
+  @Get('users')
   findAll() {
     return this.authService.findAll();
   }

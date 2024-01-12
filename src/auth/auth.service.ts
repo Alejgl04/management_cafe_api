@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ArrayContains, Repository } from 'typeorm';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 
@@ -84,8 +84,10 @@ export class AuthService {
     return this.handleMailPassword(user);
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async findAll() {
+    return this.userRepository.findBy({
+      roles: ArrayContains(['user']),
+    });
   }
 
   findOne(id: number) {

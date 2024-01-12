@@ -1,5 +1,7 @@
 import {
+  IsArray,
   IsEmail,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -25,4 +27,8 @@ export class CreateUserDto {
       'The password must have a Uppercase, lowercase letter and a number',
   })
   password: string;
+
+  @IsArray()
+  @IsOptional()
+  roles: string[];
 }
