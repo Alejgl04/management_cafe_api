@@ -2,16 +2,22 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ArrayContains, Repository } from 'typeorm';
+import { ArrayContains, DataSource, Repository } from 'typeorm';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
-import { CreateUserDto, ForgotPasswordUserDto, SignInUserDto } from './dto/';
+import {
+  CreateUserDto,
+  ForgotPasswordUserDto,
+  SignInUserDto,
+  UpdateUserDto,
+} from './dto/';
 import { JwtPayload } from './interfaces/jwt.payload.interface';
 
 @Injectable()
@@ -21,6 +27,7 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly mailerService: MailerService,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -76,16 +83,33 @@ export class AuthService {
     });
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} auth`;
   }
 
-  // update(id: number, updateAuthDto: UpdateAuthDto) {
-  //   return `This action updates a #${id} auth`;
-  // }
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepository.preload({ id, ...updateUserDto });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    return this.updateQueryRunner(id, user);
+  }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  async updateQueryRunner(id: string, user: User) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await queryRunner.manager.save(user);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+      return {
+        user,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
+      this.handleDbErrors(error);
+    }
   }
 
   private getJwtToken(payload: JwtPayload) {
