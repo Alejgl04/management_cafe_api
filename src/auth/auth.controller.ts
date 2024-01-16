@@ -4,10 +4,11 @@ import {
   Post,
   Body,
   Param,
-  Delete,
   ParseUUIDPipe,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import {
   CreateUserDto,
@@ -15,6 +16,11 @@ import {
   SignInUserDto,
   UpdateUserDto,
 } from './dto/';
+import { GetUser } from './decorators/get-user.decorator';
+import { User } from './entities/user.entity';
+import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { RoleProtected } from './decorators/role-protected.decorator';
+import { ValidRoles } from './interfaces/valid-roles.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -36,7 +42,10 @@ export class AuthController {
   }
 
   @Get('users')
-  findAll() {
+  @RoleProtected(ValidRoles.user)
+  @UseGuards(AuthGuard(), UserRoleGuard)
+  findAll(@GetUser() user: User) {
+    console.log(user);
     return this.authService.findAll();
   }
 
