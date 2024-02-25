@@ -5,10 +5,12 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+
+import { ArrayContains, DataSource, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ArrayContains, DataSource, Repository } from 'typeorm';
 import { MailerService } from '@nestjs-modules/mailer';
+
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
@@ -18,6 +20,7 @@ import {
   SignInUserDto,
   UpdateUserDto,
 } from './dto/';
+
 import { JwtPayload } from './interfaces/jwt.payload.interface';
 
 @Injectable()
