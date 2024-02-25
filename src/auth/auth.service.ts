@@ -52,7 +52,7 @@ export class AuthService {
 
   async signIn(signInUserDto: SignInUserDto) {
     const { email, password } = signInUserDto;
-    const user = await this.checkUser(email, password);
+    const user = await this.checkUserCredentials(email, password);
     return {
       ...user,
       token: this.getJwtToken({
@@ -90,10 +90,10 @@ export class AuthService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.userRepository.preload({ id, ...updateUserDto });
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
-    return this.updateQueryRunner(id, user);
+    return this.updateQueryRunner(user);
   }
 
-  async updateQueryRunner(id: string, user: User) {
+  async updateQueryRunner(user: User) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -117,7 +117,7 @@ export class AuthService {
     return token;
   }
 
-  private async checkUser(email: string, password: string) {
+  private async checkUserCredentials(email: string, password: string) {
     const user = await this.userRepository.findOne({
       where: { email },
       select: {
@@ -137,6 +137,7 @@ export class AuthService {
 
     if (!user.status)
       throw new UnauthorizedException('Waiting for admin approval');
+    delete user.password;
     return user;
   }
 
