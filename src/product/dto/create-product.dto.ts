@@ -37,6 +37,9 @@ export class CreateProductDto {
   @IsOptional()
   tags: string[];
 
+  @IsOptional()
+  active: boolean;
+
   @IsString()
   category: Category;
 }
