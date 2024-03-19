@@ -148,19 +148,11 @@ export class AuthService {
         to: email, // list of receivers
         from: 'admin@cafe.com', // sender address
         subject: 'Recovery Password ✔', // Subject line
-        html: `
-      <div style="background:#cdcdcd;padding:20px;font-size:20px;">
-        <div style="background:white;width: 70%;margin: auto;padding: 15px;">
-          Hello ${fullName},
-          <hr>
-          <br>
-          We've received a request to reset the password for the account associated with ${user.email}. No changes have been made to your account yet.
-          <br>
-          You can reset your password by clicking the link below:
-          <br>
-          <a href="">Reset Password</a>
-          </div>
-      </div>`,
+        template: './forgotPassword',
+        context: {
+          fullName,
+          email,
+        },
       })
       .then((resp) => {
         return {
@@ -169,6 +161,7 @@ export class AuthService {
         };
       })
       .catch((error) => {
+        console.log(error);
         return {
           ok: false,
           message: error.response,
