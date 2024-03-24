@@ -25,8 +25,9 @@ export class Bill {
   @Column('float')
   total: number;
 
-  @Column('text', {
+  @Column('jsonb', {
     nullable: true,
+    default: {},
   })
   productDetails: string;
 
