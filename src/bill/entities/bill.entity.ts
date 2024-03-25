@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { User } from 'src/auth/entities/user.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Bill {
@@ -31,6 +32,9 @@ export class Bill {
   })
   productDetails: string;
 
-  @Column('text')
-  createBy: string;
+  @ManyToOne(() => User, (user) => user.bill, {
+    eager: true,
+    cascade: true,
+  })
+  user: User;
 }

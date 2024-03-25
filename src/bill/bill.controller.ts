@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Body, Param, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Res,
+  ParseUUIDPipe,
+  Delete,
+} from '@nestjs/common';
 import { BillService } from './bill.service';
 import { CreateBillDto } from './dto/create-bill.dto';
 import { ValidRoles } from '../auth/interfaces/valid-roles.interface';
-import { Auth } from '../auth/decorators';
+import { Auth, GetUser } from '../auth/decorators';
+import { User } from '../auth/entities/user.entity';
 
 @Controller('bill')
 export class BillController {
@@ -10,8 +20,8 @@ export class BillController {
 
   @Post()
   @Auth(ValidRoles.user, ValidRoles.admin)
-  create(@Body() createBillDto: CreateBillDto) {
-    return this.billService.create(createBillDto);
+  create(@GetUser() user: User, @Body() createBillDto: CreateBillDto) {
+    return this.billService.create(createBillDto, user);
   }
 
   @Get()
@@ -20,7 +30,10 @@ export class BillController {
   }
 
   @Get('pdf/:id')
-  async downloadPDF(@Res() res, @Param('id') id: string): Promise<void> {
+  async downloadPDF(
+    @Res() res,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
     const buffer = await this.billService.findBillById(id);
 
     res.set({
@@ -32,8 +45,9 @@ export class BillController {
     res.end(buffer);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.billService.findOne(+id);
+  @Delete(':id')
+  @Auth(ValidRoles.admin)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.billService.remove(id);
   }
 }

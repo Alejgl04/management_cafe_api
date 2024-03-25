@@ -1,8 +1,10 @@
+import { Bill } from '../../bill/entities/bill.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -37,6 +39,9 @@ export class User {
     default: ['user'],
   })
   roles: string[];
+
+  @OneToMany(() => Bill, (bill) => bill.user)
+  bill: Bill;
 
   @BeforeInsert()
   checkEmailFieldsInsert() {

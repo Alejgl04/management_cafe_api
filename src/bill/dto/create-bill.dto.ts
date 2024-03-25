@@ -17,7 +17,4 @@ export class CreateBillDto {
 
   @IsString()
   productDetails: string;
-
-  @IsString()
-  createBy: string;
 }

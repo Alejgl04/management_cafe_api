@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 import {
   BadRequestException,
   Injectable,
@@ -6,11 +8,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateBillDto } from './dto/create-bill.dto';
-import { UpdateBillDto } from './dto/update-bill.dto';
 import { Bill } from './entities/bill.entity';
 import { v4 as uuid } from 'uuid';
 import { generatePDF, getBillPdf } from './helpers/';
 import { BillPdfResponse } from './interfaces/billPdf-response.interfaces';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class BillService {
@@ -19,7 +21,7 @@ export class BillService {
     private readonly billRepository: Repository<Bill>,
   ) {}
 
-  async create(createBillDto: CreateBillDto) {
+  async create(createBillDto: CreateBillDto, user: User) {
     const orderDetails = createBillDto;
     const productDetail = JSON.parse(orderDetails.productDetails);
     const uidFile: string = uuid();
@@ -29,6 +31,7 @@ export class BillService {
         ...orderDetails,
         uuid: uidFile,
         productDetails: productDetail,
+        user: user,
       });
       await this.billRepository.save(billReport);
 
@@ -48,29 +51,32 @@ export class BillService {
   }
 
   findAll() {
-    return `This action returns all bill`;
+    return this.billRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} bill`;
-  }
+  async remove(id: string) {
+    const product = await this.findOne(id);
+    fs.unlinkSync(__dirname + `/pdfHtml/${id}.pdf`);
+    await this.billRepository.remove(product);
 
-  update(id: number, updateBillDto: UpdateBillDto) {
-    return `This action updates a #${id} bill`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} bill`;
+    return {
+      ok: true,
+      message: 'Bill removed successfully',
+    };
   }
 
   async findBillById(id: string) {
-    const productBillPdf = await this.billRepository.findOne({
-      where: { id },
-    });
+    const productBillPdf = await this.findOne(id);
+    return await getBillPdf(productBillPdf);
+  }
 
-    if (!getBillPdf)
+  async findOne(id: string) {
+    const productBillPdf = await this.billRepository.findOne({
+      where: { uuid: id },
+    });
+    if (!productBillPdf)
       throw new NotFoundException(`Bill report with ${id} not found`);
 
-    return await getBillPdf(productBillPdf);
+    return productBillPdf;
   }
 }
