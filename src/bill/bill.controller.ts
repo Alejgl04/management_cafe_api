@@ -25,11 +25,13 @@ export class BillController {
   }
 
   @Get()
+  @Auth(ValidRoles.user)
   findAll() {
     return this.billService.findAll();
   }
 
   @Get('pdf/:id')
+  @Auth(ValidRoles.user)
   async downloadPDF(
     @Res() res,
     @Param('id', ParseUUIDPipe) id: string,
