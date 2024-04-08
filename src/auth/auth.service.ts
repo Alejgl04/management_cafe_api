@@ -164,7 +164,7 @@ export class AuthService {
       throw new UnauthorizedException(`Credentials are not valid (password)`);
 
     if (!user.status)
-      throw new UnauthorizedException('Waiting for admin approval');
+      throw new UnauthorizedException(`${user.email} is inactive, please talk to the admin`);
     delete user.password;
     return user;
   }
