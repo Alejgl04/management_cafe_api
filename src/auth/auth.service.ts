@@ -42,8 +42,12 @@ export class AuthService {
 
       return {
         ok: true,
-        message:
-          'we have sent a notification to our administrator to approve this registration',
+        ...user,
+        token: this.getJwtToken({
+          id: user.id,
+          email: user.email,
+          roles: user.roles,
+        }),
       };
     } catch (error) {
       this.handleDbErrors(error);
@@ -83,8 +87,12 @@ export class AuthService {
     });
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} auth`;
+  async findOne(email: string) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -112,9 +120,29 @@ export class AuthService {
     }
   }
 
-  private getJwtToken(payload: JwtPayload) {
+  public getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
+  }
+
+  public async refreshTokenUser(token) {
+    const splitToken = token.split(' ');
+    const newToken = splitToken[1];
+    const { payload } = this.jwtService.decode(newToken, {
+      complete: true,
+    });
+
+    const user = await this.findOne(payload.email);
+
+    const tokenRefresh = this.getJwtToken({
+      id: user.id,
+      email: user.email,
+      roles: user.roles,
+    });
+    return {
+      user,
+      token: tokenRefresh,
+    };
   }
 
   private async checkUserCredentials(email: string, password: string) {
@@ -161,7 +189,6 @@ export class AuthService {
         };
       })
       .catch((error) => {
-        console.log(error);
         return {
           ok: false,
           message: error.response,
