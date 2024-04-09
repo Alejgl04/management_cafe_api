@@ -42,7 +42,7 @@ export class AuthService {
 
       return {
         ok: true,
-        ...user,
+        user,
         token: this.getJwtToken({
           id: user.id,
           email: user.email,
@@ -58,7 +58,7 @@ export class AuthService {
     const { email, password } = signInUserDto;
     const user = await this.checkUserCredentials(email, password);
     return {
-      ...user,
+      user,
       token: this.getJwtToken({
         id: user.id,
         email: user.email,
@@ -149,8 +149,10 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       where: { email },
       select: {
+        fullName: true,
         id: true,
         email: true,
+        phone: true,
         password: true,
         roles: true,
         status: true,
@@ -164,7 +166,9 @@ export class AuthService {
       throw new UnauthorizedException(`Credentials are not valid (password)`);
 
     if (!user.status)
-      throw new UnauthorizedException(`${user.email} is inactive, please talk to the admin`);
+      throw new UnauthorizedException(
+        `${user.email} is inactive, please talk to the admin`,
+      );
     delete user.password;
     return user;
   }
