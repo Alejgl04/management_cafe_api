@@ -60,14 +60,14 @@ export class AuthController {
     return this.authService.update(id, updateUserDto);
   }
 
-  @Get('users')
   @Auth(ValidRoles.user)
+  @Get('users')
   findAll() {
     return this.authService.findAll();
   }
 
+  @Auth(ValidRoles.user, ValidRoles.admin)
   @Get('/check-token')
-  @Auth(ValidRoles.user)
   checkToken(@Request() req: Request): tokenUser {
     const user = req['user'] as User;
     return {
