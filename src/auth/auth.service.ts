@@ -56,16 +56,20 @@ export class AuthService {
   }
 
   async signIn(signInUserDto: SignInUserDto) {
-    const { email, password } = signInUserDto;
-    const user = await this.checkUserCredentials(email, password);
-    return {
-      user,
-      token: this.getJwtToken({
-        id: user.id,
-        email: user.email,
-        roles: user.roles,
-      }),
-    };
+    try {
+      const { email, password } = signInUserDto;
+      const user = await this.checkUserCredentials(email, password);
+      return {
+        user,
+        token: this.getJwtToken({
+          id: user.id,
+          email: user.email,
+          roles: user.roles,
+        }),
+      };
+    } catch (error) {
+      this.handleDbErrors(error);
+    }
   }
 
   async forgotPassword(forgotPasswordUserDto: ForgotPasswordUserDto) {
