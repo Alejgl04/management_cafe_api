@@ -15,6 +15,7 @@ import { User } from './entities/user.entity';
 import {
   CreateUserDto,
   ForgotPasswordUserDto,
+  ResetPassword,
   SignInUserDto,
   UpdateUserDto,
 } from './dto/';
@@ -79,6 +80,26 @@ export class AuthService {
       );
 
     return this.handleMailPassword(user);
+  }
+
+  async resetPassword(resetPassword: ResetPassword) {
+    try {
+      const { id, password } = resetPassword;
+
+      await this.dataSource
+        .createQueryBuilder()
+        .update(User)
+        .set({ password: bcrypt.hashSync(password, 10) })
+        .where('id = :id', { id })
+        .execute();
+
+      return {
+        ok: true,
+        message: 'Password has been changed successfully',
+      };
+    } catch (error) {
+      this.handleDbErrors(error);
+    }
   }
 
   async findAll() {
@@ -174,7 +195,7 @@ export class AuthService {
   }
 
   private async handleMailPassword(user: User) {
-    const { fullName, email } = user;
+    const { fullName, email, id } = user;
     return this.mailerService
       .sendMail({
         to: email, // list of receivers
@@ -182,8 +203,10 @@ export class AuthService {
         subject: 'Recovery Password ✔', // Subject line
         template: './forgotPassword',
         context: {
+          id,
           fullName,
           email,
+          url: process.env.URL_DEV,
         },
       })
       .then((resp) => {

@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import {
   CreateUserDto,
   ForgotPasswordUserDto,
+  ResetPassword,
   SignInUserDto,
   UpdateUserDto,
 } from './dto/';
@@ -44,6 +45,11 @@ export class AuthController {
   @Post('forgot-password')
   forgotPassword(@Body() forgotPasswordUserDto: ForgotPasswordUserDto) {
     return this.authService.forgotPassword(forgotPasswordUserDto);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() resetPassword: ResetPassword) {
+    return this.authService.resetPassword(resetPassword);
   }
 
   @Patch('users/:id')
