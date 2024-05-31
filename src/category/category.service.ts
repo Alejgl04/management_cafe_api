@@ -33,11 +33,7 @@ export class CategoryService {
 
   findAll() {
     try {
-      return this.categoryRepository.find({
-        where: {
-          status: true,
-        },
-      });
+      return this.categoryRepository.find();
     } catch (error) {
       this.handleDbErrors(error);
     }
