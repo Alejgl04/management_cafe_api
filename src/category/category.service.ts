@@ -33,7 +33,11 @@ export class CategoryService {
 
   findAll() {
     try {
-      return this.categoryRepository.find();
+      return this.categoryRepository.find({
+        order: {
+          id: 'ASC',
+        },
+      });
     } catch (error) {
       this.handleDbErrors(error);
     }
